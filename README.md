@@ -1,28 +1,30 @@
 # RealSense D455/D457 AprilGrid Calibration
 
-Kalibracija RGB + levog i desnog IR senzora na Intel RealSense D455/D457 kameri,
-korišćenjem AprilGrid table (umesto klasične šahovnice) za veću preciznost detekcije.
+Calibration of the RGB, left IR, and right IR sensors on an Intel RealSense
+D455/D457 camera, using an AprilGrid board (instead of a classic chessboard)
+for more precise detection.
 
-## Kalibraciona tabla
+## Calibration board
 
-- **7 × 10** AprilTag markera
-- Rečnik: **tag36h11**
-- Veličina taga: **21 mm**
-- Razmak između tagova: **6 mm**
-- Fabrički generisan PDF za A4 (183 × 264 mm, centrirano, bez skaliranja pri štampi)
+- **7 × 10** AprilTag markers
+- Dictionary: **tag36h11**
+- Tag size: **21 mm**
+- Spacing between tags: **6 mm**
+- Custom-generated A4 PDF (183 × 264 mm, centered, no print scaling)
 
-> Tabla se štampa na A4 papiru na **100% skali** (isključi "Fit to page" u štampaču),
-> inače se fizičke dimenzije neće poklapati sa `TAG_SIZE_MM`/`SPACING_MM` u kodu.
+> Print the board on A4 paper at **100% scale** (disable "Fit to page" in
+> your printer settings), otherwise the physical dimensions won't match
+> `TAG_SIZE_MM`/`SPACING_MM` in the code.
 
-## Struktura projekta
+## Project structure
 
 ```
 aprilgrid_calibration/
-├── capture.py          # snimanje sinhronizovanih RGB + IR1 + IR2 slika
-├── common.py            # zajedničke helper funkcije (YAML I/O)
-├── rgb_mono.py           # mono kalibracija RGB senzora
-├── ir_mono.py            # mono kalibracija levog/desnog IR senzora
-├── stereo.py             # stereo kalibracija (left-right, rgb-left)
+├── capture.py          # synchronized RGB + IR1 + IR2 image capture
+├── common.py             # shared helper functions (YAML I/O)
+├── rgb_mono.py            # mono calibration of the RGB sensor
+├── ir_mono.py             # mono calibration of the left/right IR sensor
+├── stereo.py              # stereo calibration (left-right, rgb-left)
 ├── calib_images/
 │   ├── rgb/
 │   ├── left_ir/
@@ -35,46 +37,50 @@ aprilgrid_calibration/
     └── stereo_rgb_left.yaml
 ```
 
-## Zavisnosti
+## Dependencies
 
 ```bash
 pip3 install pyrealsense2 opencv-contrib-python numpy
 ```
 
-`opencv-contrib-python` je obavezan (ne običan `opencv-python`) jer sadrži `cv2.aruco` modul.
+`opencv-contrib-python` is required (not plain `opencv-python`), since it
+includes the `cv2.aruco` module.
 
-## Redosled koraka
+## Step-by-step order
 
-### 1. Snimanje slika
+### 1. Capturing images
 
 ```bash
 python3 capture.py
 ```
 
-- `SPACE` — čuva sinhronizovani triplet (RGB + IR1 + IR2), samo ako su sva tri
-  frejma detektovala **minimum `MIN_TAGS`** (podrazumevano 20) tagova
-- `Q` — izlaz
-- IR emiter (laser projektor) se automatski gasi tokom snimanja jer njegov
-  tačkasti pattern ometa detekciju tagova
-- Preporuka: snimi 150–300 slika sa raznovrsnim uglovima, udaljenostima i
-  pozicijama table u kadru (uključujući ivice/uglove slike, ne samo centar)
+- `SPACE` — saves a synchronized triplet (RGB + IR1 + IR2), only if all
+  three frames detected **at least `MIN_TAGS`** (default 20) tags
+- `Q` — quit
+- The IR emitter (laser projector) is automatically disabled during capture,
+  since its dot pattern interferes with tag detection
+- Recommendation: capture 150–300 images with varied angles, distances, and
+  board positions in the frame (including the edges/corners of the image,
+  not just the center)
 
-**Rezolucija/FPS** (`WIDTH, HEIGHT, FPS` na vrhu fajla) mora da odgovara onome
-što tvoja USB veza podržava:
+**Resolution/FPS** (`WIDTH, HEIGHT, FPS` at the top of the file) must match
+what your USB connection supports:
 
-- USB3 veza: `1280, 720, 30` radi za sve tri strimove istovremeno
-- USB2 veza: kamera ograničava kombinacije (Color max ~15Hz na 720p, IR max ~5Hz);
-  proveri `rs-enumerate-devices -c` i po potrebi koristi `640, 480, 30`
+- USB3 connection: `1280, 720, 30` works for all three streams simultaneously
+- USB2 connection: the camera restricts combinations (Color maxes out around
+  ~15Hz at 720p, IR around ~5Hz); check `rs-enumerate-devices -c` and use
+  `640, 480, 30` if needed
 
-> **Kritično**: ne menjaj rezoluciju između snimanja u isti `calib_images/` folder.
-> Mešanje rezolucija u istom skupu slika tiho unosi sistemsku grešku u kalibraciju
-> (RMS naraste 2–4×) bez ijedne greške pri izvršavanju. Ako menjaš rezoluciju,
-> obriši stare slike i snimi ceo set iznova:
+> **Critical**: don't change resolution between captures into the same
+> `calib_images/` folder. Mixing resolutions in the same image set silently
+> introduces a systematic error into the calibration (RMS jumps 2–4×) with no
+> runtime error at all. If you change resolution, delete the old images and
+> recapture the whole set from scratch:
 > ```bash
 > rm -rf calib_images/rgb calib_images/left_ir calib_images/right_ir
 > ```
 
-### 2. Mono kalibracija (mora pre stereo koraka)
+### 2. Mono calibration (must run before the stereo step)
 
 ```bash
 python3 rgb_mono.py calibrate
@@ -82,59 +88,62 @@ python3 ir_mono.py calibrate left
 python3 ir_mono.py calibrate right
 ```
 
-Svaka komanda:
-- detektuje AprilGrid u svakoj slici (`MIN_TAGS` prag)
-- računa `cv2.calibrateCamera` (K, distortion coefficients)
-- ispisuje RMS reprojection error po celom skupu i po frejmu
-- čuva rezultat u `results/*_intrinsics.yaml`
+Each command:
+- detects the AprilGrid in every image (`MIN_TAGS` threshold)
+- computes `cv2.calibrateCamera` (K, distortion coefficients)
+- prints the RMS reprojection error for the whole set and per frame
+- saves the result to `results/*_intrinsics.yaml`
 
-**`stereo.py` čita ove `.yaml` fajlove sa diska** — ne računa intrinsics iznova.
-Ako ponovo snimiš slike (novi `capture.py` run), moraš ponovo pokrenuti sve
-tri mono komande pre stereo koraka, inače stereo kalibracija koristi zastarele
-intrinsics iz starog skupa slika.
+**`stereo.py` reads these `.yaml` files from disk** — it does not recompute
+intrinsics on the fly. If you recapture images (a new `capture.py` run), you
+must rerun all three mono commands before the stereo step, otherwise stereo
+calibration will use stale intrinsics from the old image set.
 
-### 3. Stereo kalibracija
+### 3. Stereo calibration
 
 ```bash
 python3 stereo.py calibrate left-right
 python3 stereo.py calibrate rgb-left
 ```
 
-- Koristi `cv2.CALIB_FIX_INTRINSIC` — mono intrinsics se ne menjaju, računa se
-  samo relativna rotacija/translacija (R, T) između dva senzora
-- Za svaki frejm koristi **samo tagove vidljive u oba senzora** (`common_ids`),
-  da bi `objpoints`/`imgpoints1`/`imgpoints2` imali isti broj tačaka u istom
-  redosledu — obavezno za `cv2.stereoCalibrate`
-- Rezultat (K1, dist1, K2, dist2, R, T, E, F) se čuva u `results/stereo_*.yaml`
+- Uses `cv2.CALIB_FIX_INTRINSIC` — mono intrinsics are held fixed, only the
+  relative rotation/translation (R, T) between the two sensors is solved for
+- For each frame, uses only the tags visible in **both** sensors
+  (`common_ids`), so that `objpoints`/`imgpoints1`/`imgpoints2` have the same
+  number of points in the same order — required by `cv2.stereoCalibrate`
+- The result (K1, dist1, K2, dist2, R, T, E, F) is saved to
+  `results/stereo_*.yaml`
 
-## Očekivani rezultati (orijentacija)
+## Expected results (rule of thumb)
 
-| RMS reprojection error | Kvalitet |
+| RMS reprojection error | Quality |
 |---|---|
-| < 0.5 px | vrhunski, pogodno za precizan depth/3D |
-| 0.5 – 1.5 px | solidno, standard za robotiku (navigacija, AprilTag docking) |
-| > 2–3 px | problematično — proveri mešane rezolucije, loš fokus, ili premalu tablu u kadru |
+| < 0.5 px | excellent, suitable for precise depth/3D |
+| 0.5 – 1.5 px | solid, standard for robotics (navigation, AprilTag docking) |
+| > 2–3 px | problematic — check for mixed resolutions, poor focus, or the board being too small in frame |
 
-RGB senzor obično ima veći RMS od IR senzora (veća fabrička distorzija), i
-`stereo_rgb_left` obično ispadne nešto lošiji od `stereo_left_right` (dva
-različita tipa senzora umesto identičnog para) — to je očekivano, ne greška.
+The RGB sensor usually has a higher RMS than the IR sensors (larger factory
+distortion), and `stereo_rgb_left` usually comes out somewhat worse than
+`stereo_left_right` (two different sensor types instead of an identical
+pair) — that's expected, not a bug.
 
-## Parametri koje treba menjati zajedno
+## Parameters that must be changed together
 
-`GRID_COLS`, `GRID_ROWS`, `TAG_SIZE_MM`, `SPACING_MM`, `TAG_DICT_ID` i
-`MIN_TAGS` su definisani identično u `capture.py`, `rgb_mono.py`, `ir_mono.py`
-i `stereo.py`. Ako menjaš tablu (npr. štampaš novu na drugoj veličini), ove
-vrednosti moraju biti usklađene u sva četiri fajla.
+`GRID_COLS`, `GRID_ROWS`, `TAG_SIZE_MM`, `SPACING_MM`, `TAG_DICT_ID`, and
+`MIN_TAGS` are defined identically in `capture.py`, `rgb_mono.py`,
+`ir_mono.py`, and `stereo.py`. If you change the board (e.g. print a new one
+at a different size), these values must be kept in sync across all four
+files.
 
-## Debagovanje
+## Troubleshooting
 
-- **`Couldn't resolve requests`** pri `capture.py` — tražena kombinacija
-  rezolucije/FPS-a nije podržana na trenutnoj USB vezi; proveri
-  `rs-enumerate-devices -c` i prilagodi `WIDTH, HEIGHT, FPS`
-- **`ModuleNotFoundError: pyrealsense2`** — nije instaliran u aktivnom
-  virtualenv-u (`pip3 install pyrealsense2`)
-- **Nagli skok u RMS-u posle dodavanja novih slika** — skoro uvek mešane
-  rezolucije u istom folderu; obriši i snimi iznova na jednoj rezoluciji
-- **`stereo.py` javlja nerealno visok RMS iako su mono rezultati dobri** —
-  proveri da li si pokrenula mono kalibracije NA TRENUTNOM skupu slika pre
-  stereo koraka (vidi korak 2)
+- **`Couldn't resolve requests`** in `capture.py` — the requested
+  resolution/FPS combination isn't supported on the current USB connection;
+  check `rs-enumerate-devices -c` and adjust `WIDTH, HEIGHT, FPS`
+- **`ModuleNotFoundError: pyrealsense2`** — not installed in the active
+  virtualenv (`pip3 install pyrealsense2`)
+- **Sudden jump in RMS after adding new images** — almost always mixed
+  resolutions in the same folder; delete and recapture at a single resolution
+- **`stereo.py` reports an unrealistically high RMS even though the mono
+  results look good** — check whether you ran the mono calibrations on the
+  CURRENT image set before the stereo step (see step 2)
