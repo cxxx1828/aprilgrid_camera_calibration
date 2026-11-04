@@ -6,13 +6,12 @@ import numpy as np
 
 from common import load_mono_yaml, save_stereo_yaml
 
-# ---- AprilGrid parameters (must match the generated PDF board / capture.py) ----
 GRID_COLS = 7
 GRID_ROWS = 10
 TAG_SIZE_MM = 21.0
 SPACING_MM = 6.0
 TAG_DICT_ID = cv2.aruco.DICT_APRILTAG_36h11
-MIN_TAGS = 20  # min. broj detektovanih tagova (u OBA frejma) da se par iskoristi
+MIN_TAGS = 20  
 
 aruco_dict = cv2.aruco.getPredefinedDictionary(TAG_DICT_ID)
 aruco_params = cv2.aruco.DetectorParameters()
@@ -23,7 +22,6 @@ PITCH_MM = TAG_SIZE_MM + SPACING_MM
 
 
 def build_apriltag_object_points():
-    """id -> 4x3 float32 array of corner coords (TL,TR,BR,BL), matches aruco corner order."""
     obj = {}
     tag_id = 0
     for r in range(GRID_ROWS):
