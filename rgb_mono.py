@@ -1,8 +1,5 @@
 """
-Mono calibration for RealSense D457 (RGB stream) using a 7x10 AprilGrid,
-tag36h11, tag=21mm, spacing=6mm.
-
-Usage:
+to start:
     python3 rgb_mono.py calibrate -> compute calibration from captured images
 
 Result is saved to ./results/rgb_intrinsics.yaml
@@ -33,7 +30,6 @@ PITCH_MM = TAG_SIZE_MM + SPACING_MM
 
 
 def build_apriltag_object_points():
-    """id -> 4x3 float32 array of corner coords (TL,TR,BR,BL), matches aruco corner order."""
     obj = {}
     tag_id = 0
     for r in range(GRID_ROWS):
@@ -98,7 +94,6 @@ def calibrate():
         objpoints, imgpoints, img_shape, None, None
     )
 
-    print("\n=== RESULT ===")
     print(f"RMS reprojection error: {ret:.4f} px")
     print("Camera matrix K:\n", K)
     print("Distortion coeffs:\n", dist)
