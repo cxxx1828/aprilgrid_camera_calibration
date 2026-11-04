@@ -1,8 +1,5 @@
 """
-Mono calibration for RealSense D457 IR sensors (left + right) using a 7x10 AprilGrid,
-tag36h11, tag=21mm, spacing=6mm.
-
-Usage:
+to start:
     python3 ir_mono.py calibrate left  -> compute calibration for the left IR sensor
     python3 ir_mono.py calibrate right -> compute calibration for the right IR sensor
 
