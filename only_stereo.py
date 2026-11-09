@@ -71,7 +71,6 @@ PAIRS = {
     },
 }
 
-
 def calibrate(pair_name):
     cfg = PAIRS[pair_name]
 
