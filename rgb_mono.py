@@ -1,7 +1,6 @@
 """
 to start:
     python3 rgb_mono.py calibrate -> compute calibration from captured images
-
 Result is saved to ./results/rgb_intrinsics.yaml
 """
 
