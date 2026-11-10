@@ -12,13 +12,12 @@ import numpy as np
 
 from common import save_mono_yaml
 
-# ---- AprilGrid parameters (must match the generated PDF board / capture.py) ----
 GRID_COLS = 7
 GRID_ROWS = 10
 TAG_SIZE_MM = 21.0
 SPACING_MM = 6.0
 TAG_DICT_ID = cv2.aruco.DICT_APRILTAG_36h11
-MIN_TAGS = 20  # min. broj detektovanih tagova da se frejm iskoristi
+MIN_TAGS = 20  
 
 aruco_dict = cv2.aruco.getPredefinedDictionary(TAG_DICT_ID)
 aruco_params = cv2.aruco.DetectorParameters()
