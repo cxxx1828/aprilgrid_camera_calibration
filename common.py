@@ -48,7 +48,6 @@ def load_mono_yaml(path):
     fs.release()
     return K, dist, (width, height)
 
-
 def save_stereo_yaml(path, K1, dist1, K2, dist2, R, T, E, F, rms_error):
     fs = cv2.FileStorage(path, cv2.FILE_STORAGE_WRITE)
     fs.write("camera_matrix_1", K1)
