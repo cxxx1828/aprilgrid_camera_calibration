@@ -1,4 +1,4 @@
-# RealSense D455/D457 AprilGrid Calibration
+# AprilGrid Calibration
 
 Calibration of the RGB, left IR, and right IR sensors on an Intel RealSense
 D455/D457 camera, using an AprilGrid board (instead of a classic chessboard)
