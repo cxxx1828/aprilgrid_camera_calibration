@@ -115,7 +115,7 @@ def calibrate(pair_name):
             print(f"Skipping {basename} (tags found: {n1} / {n2}, need >= {MIN_TAGS} in both)")
             continue
 
-        # koristi samo tagove vidljive u OBA frejma, u istom redosledu
+        # if both frames see it it's valid
         ids1_flat = ids1.flatten()
         ids2_flat = ids2.flatten()
         common_ids = sorted(set(ids1_flat.tolist()) & set(ids2_flat.tolist()))
