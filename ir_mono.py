@@ -4,7 +4,6 @@ to start:
     python3 ir_mono.py calibrate right -> compute calibration for the right IR sensor
 
 Results are saved to ./results/left_ir_intrinsics.yaml and ./results/right_ir_intrinsics.yaml
-
 Note: capture.py disables the IR emitter (laser projector) during capture,
 since its dot pattern interferes with tag detection.
 """
