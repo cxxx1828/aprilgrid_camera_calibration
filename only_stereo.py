@@ -6,7 +6,7 @@ import numpy as np
 
 from common import load_mono_yaml, save_stereo_yaml
 
-GRID_COLS = 7
+GRID_COLS = 74
 GRID_ROWS = 10
 TAG_SIZE_MM = 21.0
 SPACING_MM = 6.0
